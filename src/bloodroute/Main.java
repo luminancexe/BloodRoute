@@ -84,7 +84,7 @@ public class Main {
     private static void printBanner() {
         System.out.println("=================================================================================");
         System.out.println("  🩸 BLOODROUTE: EMERGENCY BLOOD DONOR MATCHING & ROUTING SYSTEM");
-        System.out.println("  Course: BIC2214 Data Structures & Algorithms | Real-Life Project");
+        System.out.println("  Data Structures & Algorithms | Real-Life Emergency System");
         System.out.println("  Location Anchor: Dhaka City Road Network & Medical Facilities");
         System.out.println("  Web Interface:   http://localhost:" + WEB_PORT);
         System.out.println("=================================================================================");
