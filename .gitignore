@@ -44,3 +44,8 @@ Desktop.ini
 # Logs & temporary files
 *.log
 *.tmp
+
+# Course details & Academic documentation
+docs/
+*.pdf
+
