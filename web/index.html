@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodRoute — Dhaka Emergency Blood Donor Matching & Routing</title>
+    <!-- Leaflet CSS for Real Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="blood-drop">🩸</span>
+            <div class="brand-text">
+                <h1>BloodRoute</h1>
+                <p>Dhaka Emergency Blood Logistics & Proximity Routing</p>
+            </div>
+        </div>
+        <div class="header-badges">
+            <span class="dsa-badge">BIC2214 DSA Project</span>
+            <span class="live-status"><span class="pulse-dot"></span> Java Backend Active</span>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="main-layout">
+        <!-- Left Sidebar: Controls & Match Results -->
+        <aside class="sidebar">
+            <!-- Emergency Dispatch Form -->
+            <section class="card emergency-card">
+                <div class="card-title">
+                    <span class="icon">🚨</span>
+                    <h2>Emergency Blood Request</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label for="requesterSelect">Requester / Hospital Location:</label>
+                    <select id="requesterSelect" class="form-control">
+                        <option value="">Loading Dhaka locations...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="bloodTypeSelect">Patient Required Blood Group:</label>
+                    <div class="blood-grid">
+                        <button type="button" class="blood-btn" data-type="O+">O+</button>
+                        <button type="button" class="blood-btn" data-type="O-">O-</button>
+                        <button type="button" class="blood-btn active" data-type="A+">A+</button>
+                        <button type="button" class="blood-btn" data-type="A-">A-</button>
+                        <button type="button" class="blood-btn" data-type="B+">B+</button>
+                        <button type="button" class="blood-btn" data-type="B-">B-</button>
+                        <button type="button" class="blood-btn" data-type="AB+">AB+</button>
+                        <button type="button" class="blood-btn" data-type="AB-">AB-</button>
+                    </div>
+                    <input type="hidden" id="selectedBloodType" value="A+">
+                </div>
+
+                <div class="simulation-toggle-row">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="simToggle" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">✨ Visual Algorithm Simulation</span>
+                    </label>
+                </div>
+
+                <button id="findDonorBtn" class="btn btn-emergency">
+                    ⚡ Find Nearest Compatible Donor
+                </button>
+            </section>
+
+            <!-- Nearest Donor Highlight Card -->
+            <section id="nearestDonorCard" class="card nearest-card hidden">
+                <div class="card-title">
+                    <span class="icon">🏆</span>
+                    <h2>Top Nearest Match (Dijkstra)</h2>
+                </div>
+                <div class="donor-hero">
+                    <div class="donor-avatar" id="heroBloodGroup">A+</div>
+                    <div class="donor-primary-info">
+                        <h3 id="heroDonorName">Tanvir Ahmed</h3>
+                        <p class="donor-location" id="heroLocationArea">📍 Green Road, Dhanmondi</p>
+                    </div>
+                </div>
+                <div class="metrics-row">
+                    <div class="metric">
+                        <span class="metric-label">Road Distance</span>
+                        <span class="metric-value" id="heroDistance">0.0 km</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Estimated Transit</span>
+                        <span class="metric-value" id="heroEta">0 mins</span>
+                    </div>
+                </div>
+                <div class="contact-box">
+                    <span class="contact-label">Emergency Phone:</span>
+                    <a href="#" id="heroPhone" class="phone-link">+8801700000000</a>
+                </div>
+                <div class="route-summary">
+                    <strong>Shortest Path Route:</strong>
+                    <div id="heroPathSequence" class="path-sequence">Hospital &rarr; Donor</div>
+                </div>
+            </section>
+
+            <!-- Ranked Donor List -->
+            <section class="card results-card">
+                <div class="card-title">
+                    <span class="icon">📋</span>
+                    <h2>Ranked Compatible Donors (<span id="matchCount">0</span>)</h2>
+                </div>
+                <div id="rankedDonorList" class="donor-list">
+                    <p class="placeholder-text">Submit an emergency request above to rank matching donors by road distance.</p>
+                </div>
+            </section>
+
+            <!-- Register Donor Toggle Button -->
+            <button id="openRegisterModalBtn" class="btn btn-secondary">
+                ➕ Register New Blood Donor
+            </button>
+        </aside>
+
+        <!-- Right: Real OpenStreetMap Interactive Canvas -->
+        <section class="map-container">
+            <!-- Floating Simulation HUD -->
+            <div id="simHud" class="sim-hud hidden">
+                <div class="sim-hud-header">
+                    <span class="sim-badge" id="simBadge">DIJKSTRA MIN-HEAP</span>
+                    <span class="sim-step-text" id="simStepText">Step 0 / 0</span>
+                    <button id="simSkipBtn" class="sim-btn-skip">Skip ⏩</button>
+                </div>
+                <div class="sim-hud-body">
+                    <p id="simDescText">Simulating Dijkstra path exploration...</p>
+                </div>
+                <div class="sim-hud-footer">
+                    <div class="sim-speed-control">
+                        <span>Speed:</span>
+                        <button class="speed-btn" data-speed="600">0.5x</button>
+                        <button class="speed-btn active" data-speed="250">1x</button>
+                        <button class="speed-btn" data-speed="80">3x</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="map"></div>
+            <div class="map-legend">
+                <div class="legend-item"><span class="legend-dot hospital-dot"></span> Hospital / Requester</div>
+                <div class="legend-item"><span class="legend-dot donor-dot"></span> Registered Donor</div>
+                <div class="legend-item"><span class="legend-dot exploring-dot"></span> Heap Frontier (Active)</div>
+                <div class="legend-item"><span class="legend-line route-line"></span> Shortest Route</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Registering New Donor -->
+    <div id="registerModal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <h2>Register New Blood Donor</h2>
+                <button id="closeRegisterModalBtn" class="close-btn">&times;</button>
+            </div>
+            <form id="registerDonorForm">
+                <div class="form-group">
+                    <label for="regName">Full Name:</label>
+                    <input type="text" id="regName" class="form-control" required placeholder="e.g., Ahsan Habib">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="regBloodType">Blood Group:</label>
+                        <select id="regBloodType" class="form-control">
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="regLocation">Dhaka Location / Node:</label>
+                        <select id="regLocation" class="form-control" required></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Phone Number:</label>
+                    <input type="tel" id="regPhone" class="form-control" required placeholder="+8801712345678">
+                </div>
+                <div class="form-group">
+                    <label for="regAddress">Address / Landmark:</label>
+                    <input type="text" id="regAddress" class="form-control" placeholder="House 12, Road 4, Dhanmondi">
+                </div>
+                <button type="submit" class="btn btn-primary">Save & Register Donor</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="app.js"></script>
+</body>
+</html>
