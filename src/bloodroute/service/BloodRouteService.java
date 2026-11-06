@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 /**
  * Core business logic service for BloodRoute.
- * Coordinates Dhaka road graph, donor registry, Dijkstra pathfinding, and proximity ranking.
+ * Coordinates Bangladesh nationwide road graph, donor registry, Dijkstra pathfinding, and proximity ranking.
  */
 public class BloodRouteService {
 
@@ -19,11 +19,11 @@ public class BloodRouteService {
     private final CustomLinkedList<Donor> donorRegistry;
 
     public BloodRouteService() {
-        // Initialize Dhaka road network graph with capacity for 25 nodes
-        this.cityGraph = new Graph(25);
+        // Initialize Bangladesh nationwide road network graph with capacity for 50 nodes
+        this.cityGraph = new Graph(50);
         this.donorRegistry = new CustomLinkedList<>();
 
-        initializeDhakaRoadNetwork();
+        initializeBangladeshRoadNetwork();
         initializeDefaultDonors();
     }
 
@@ -71,7 +71,9 @@ public class BloodRouteService {
                 }
             }
 
-            double etaMinutes = reachable ? (dist / 25.0) * 60.0 : -1.0;
+            // Transit speed: intra-district (<30km) avg 35 km/h, inter-district highway (>=30km) avg 65 km/h
+            double avgSpeedKmH = dist < 30.0 ? 35.0 : 65.0;
+            double etaMinutes = reachable ? (dist / avgSpeedKmH) * 60.0 : -1.0;
             rawResults.addLast(new MatchResult(donor, dist, etaMinutes, path, reachable));
         }
 
@@ -145,70 +147,176 @@ public class BloodRouteService {
     }
 
     /**
-     * Configures real-world Dhaka landmarks, medical hospitals, and arterial roads.
+     * Configures real-world Bangladesh medical college hospitals, district healthcare hubs,
+     * and national highway arterial networks covering all 8 administrative divisions.
      */
-    private void initializeDhakaRoadNetwork() {
-        // Adding Vertices (Real Dhaka Coordinates)
-        cityGraph.addVertex(new LocationNode(0, "Dhaka Medical College Hospital (DMCH)", 23.7258, 90.3976, true, "Bakshibazar"));
-        cityGraph.addVertex(new LocationNode(1, "BSMMU / PG Hospital", 23.7388, 90.3956, true, "Shahbagh"));
-        cityGraph.addVertex(new LocationNode(2, "BIRDEM General Hospital", 23.7397, 90.3962, true, "Shahbagh"));
-        cityGraph.addVertex(new LocationNode(3, "Science Lab Intersection", 23.7389, 90.3838, false, "Dhanmondi"));
-        cityGraph.addVertex(new LocationNode(4, "Central Hospital", 23.7428, 90.3824, true, "Green Road"));
-        cityGraph.addVertex(new LocationNode(5, "Square Hospital", 23.7530, 90.3817, true, "Panthapath"));
-        cityGraph.addVertex(new LocationNode(6, "Kawran Bazar Junction", 23.7511, 90.3934, false, "Tejgaon"));
-        cityGraph.addVertex(new LocationNode(7, "Farmgate Intersection", 23.7570, 90.3895, false, "Farmgate"));
-        cityGraph.addVertex(new LocationNode(8, "Shaheed Suhrawardy Medical College Hospital", 23.7699, 90.3705, true, "Sher-e-Bangla Nagar"));
-        cityGraph.addVertex(new LocationNode(9, "National Institute of Neurosciences (NINS)", 23.7745, 90.3735, true, "Agargaon"));
-        cityGraph.addVertex(new LocationNode(10, "Asad Gate", 23.7594, 90.3664, false, "Mohammadpur"));
-        cityGraph.addVertex(new LocationNode(11, "Mohakhali Intersection", 23.7776, 90.4034, false, "Mohakhali"));
-        cityGraph.addVertex(new LocationNode(12, "ICDDR,B Hospital", 23.7788, 90.4020, true, "Mohakhali"));
-        cityGraph.addVertex(new LocationNode(13, "Gulshan-1 Circle", 23.7782, 90.4170, false, "Gulshan"));
-        cityGraph.addVertex(new LocationNode(14, "Banani Road 11", 23.7937, 90.4043, false, "Banani"));
-        cityGraph.addVertex(new LocationNode(15, "Mirpur 10 Circle", 23.8069, 90.3687, false, "Mirpur"));
-        cityGraph.addVertex(new LocationNode(16, "Kurmitola General Hospital", 23.8223, 90.4125, true, "Cantonment"));
-        cityGraph.addVertex(new LocationNode(17, "Uttara Sector 3 / Rajlakshmi", 23.8683, 90.3986, false, "Uttara"));
+    private void initializeBangladeshRoadNetwork() {
+        // --- DIVISION 1: DHAKA DIVISION ---
+        cityGraph.addVertex(new LocationNode(0, "Dhaka Medical College Hospital (DMCH)", 23.7258, 90.3976, true, "Bakshibazar / Old Dhaka", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(1, "BSMMU / PG Hospital", 23.7388, 90.3956, true, "Shahbagh", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(2, "Square Hospital", 23.7530, 90.3817, true, "Panthapath", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(3, "Kurmitola General Hospital", 23.8223, 90.4125, true, "Airport / Cantonment", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(4, "Gazipur Shaheed Tajuddin Ahmad MCH", 23.9989, 90.3802, true, "Gazipur", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(5, "Narsingdi 100 Bed District Hospital", 23.9224, 90.7177, true, "Narsingdi", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(6, "Narayanganj 300 Bed Hospital", 23.6238, 90.5000, true, "Narayanganj", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(7, "Bhairab Junction / Meghna Bridge", 24.0514, 90.9856, false, "Bhairab / Kishoreganj", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(8, "Tangail 250 Bed General Hospital", 24.2513, 89.9167, true, "Tangail", "Dhaka"));
+        cityGraph.addVertex(new LocationNode(9, "Faridpur Bangabandhu Sheikh Mujib MCH", 23.6070, 89.8429, true, "Faridpur", "Dhaka"));
 
-        // Adding Weighted Edges (Realistic Road Distances in Kilometers)
-        cityGraph.addEdge(0, 1, 1.8, "Secretariat Rd / Kazi Nazrul Islam Ave", true);
-        cityGraph.addEdge(1, 2, 0.3, "Shahbagh Crossing", true);
-        cityGraph.addEdge(1, 3, 1.6, "Elephant Road", true);
-        cityGraph.addEdge(3, 4, 0.6, "Green Road", true);
-        cityGraph.addEdge(4, 5, 1.4, "Green Road / Panthapath", true);
-        cityGraph.addEdge(3, 10, 2.4, "Mirpur Road", true);
-        cityGraph.addEdge(1, 6, 1.5, "Kazi Nazrul Islam Ave", true);
-        cityGraph.addEdge(6, 7, 0.9, "Kazi Nazrul Islam Ave", true);
-        cityGraph.addEdge(6, 5, 1.3, "Panthapath", true);
-        cityGraph.addEdge(7, 8, 2.2, "Manik Mia Ave / Mirpur Rd", true);
-        cityGraph.addEdge(7, 11, 2.7, "Airport Road / Mohakhali Flyover", true);
-        cityGraph.addEdge(10, 8, 1.5, "Mirpur Road", true);
-        cityGraph.addEdge(8, 9, 0.8, "Syed Mahbub Morshed Ave", true);
-        cityGraph.addEdge(9, 15, 4.1, "Begum Rokeya Sarani", true);
-        cityGraph.addEdge(11, 12, 0.4, "Mohakhali TB Gate Road", true);
-        cityGraph.addEdge(11, 13, 1.6, "Gulshan-Mohakhali Link Road", true);
-        cityGraph.addEdge(11, 14, 2.1, "Airport Road / Kemal Ataturk", true);
-        cityGraph.addEdge(13, 14, 2.2, "Gulshan Avenue", true);
-        cityGraph.addEdge(14, 16, 3.5, "Dhaka-Mymensingh Highway", true);
-        cityGraph.addEdge(16, 17, 5.4, "Dhaka-Mymensingh Highway", true);
-        cityGraph.addEdge(15, 17, 8.2, "Mirpur-Uttara Link Road", true);
+        // --- DIVISION 2: CHATTOGRAM DIVISION ---
+        cityGraph.addVertex(new LocationNode(10, "Cumilla Medical College Hospital (CuMCH)", 23.4607, 91.1809, true, "Cumilla", "Chattogram"));
+        cityGraph.addVertex(new LocationNode(11, "Feni 250 Bed District Sadar Hospital", 23.0159, 91.3976, true, "Feni", "Chattogram"));
+        cityGraph.addVertex(new LocationNode(12, "Chittagong Medical College Hospital (CMCH)", 22.3592, 91.8288, true, "Chattogram City", "Chattogram"));
+        cityGraph.addVertex(new LocationNode(13, "Cox's Bazar 250 Bed Sadar Hospital", 21.4272, 91.9782, true, "Cox's Bazar", "Chattogram"));
+        cityGraph.addVertex(new LocationNode(14, "Noakhali Abdul Malek Ukil MCH", 22.8710, 91.0973, true, "Maijdee / Noakhali", "Chattogram"));
+        cityGraph.addVertex(new LocationNode(15, "Brahmanbaria 250 Bed District Hospital", 23.9608, 91.1115, true, "Brahmanbaria", "Chattogram"));
+
+        // --- DIVISION 3: SYLHET DIVISION ---
+        cityGraph.addVertex(new LocationNode(16, "Sylhet MAG Osmani MCH (SOMCH)", 24.8998, 91.8576, true, "Sylhet City", "Sylhet"));
+        cityGraph.addVertex(new LocationNode(17, "Moulvibazar 250 Bed District Hospital", 24.4843, 91.7685, true, "Moulvibazar", "Sylhet"));
+        cityGraph.addVertex(new LocationNode(18, "Habiganj 250 Bed District Hospital", 24.3749, 91.4155, true, "Habiganj", "Sylhet"));
+
+        // --- DIVISION 4: MYMENSINGH DIVISION ---
+        cityGraph.addVertex(new LocationNode(19, "Mymensingh Medical College Hospital (MMCH)", 24.7471, 90.4103, true, "Mymensingh City", "Mymensingh"));
+        cityGraph.addVertex(new LocationNode(20, "Jamalpur 250 Bed General Hospital", 24.9375, 89.9378, true, "Jamalpur", "Mymensingh"));
+        cityGraph.addVertex(new LocationNode(21, "Netrokona Modern Sadar Hospital", 24.8833, 90.7333, true, "Netrokona", "Mymensingh"));
+
+        // --- DIVISION 5: RAJSHAHI DIVISION ---
+        cityGraph.addVertex(new LocationNode(22, "Sirajganj 250 Bed Hospital (Jamuna West)", 24.4534, 89.7006, true, "Sirajganj", "Rajshahi"));
+        cityGraph.addVertex(new LocationNode(23, "Bogura Shaheed Ziaur Rahman MCH (SZRMCH)", 24.8465, 89.3777, true, "Bogura", "Rajshahi"));
+        cityGraph.addVertex(new LocationNode(24, "Rajshahi Medical College Hospital (RMCH)", 24.3707, 88.5833, true, "Rajshahi City", "Rajshahi"));
+        cityGraph.addVertex(new LocationNode(25, "Pabna 250 Bed General Hospital", 24.0064, 89.2372, true, "Pabna", "Rajshahi"));
+        cityGraph.addVertex(new LocationNode(26, "Natore Modern Sadar Hospital", 24.4102, 88.9795, true, "Natore", "Rajshahi"));
+
+        // --- DIVISION 6: RANGPUR DIVISION ---
+        cityGraph.addVertex(new LocationNode(27, "Rangpur Medical College Hospital (RpMCH)", 25.7500, 89.2500, true, "Rangpur City", "Rangpur"));
+        cityGraph.addVertex(new LocationNode(28, "Dinajpur M Abdur Rahim MCH", 25.6217, 88.6355, true, "Dinajpur", "Rangpur"));
+        cityGraph.addVertex(new LocationNode(29, "Saidpur 100 Bed Hospital", 25.7777, 88.8917, true, "Saidpur / Nilphamari", "Rangpur"));
+
+        // --- DIVISION 7: KHULNA DIVISION ---
+        cityGraph.addVertex(new LocationNode(30, "Kushtia 250 Bed General Hospital", 23.9013, 89.1205, true, "Kushtia", "Khulna"));
+        cityGraph.addVertex(new LocationNode(31, "Jashore 250 Bed General Hospital", 23.1664, 89.2138, true, "Jashore", "Khulna"));
+        cityGraph.addVertex(new LocationNode(32, "Khulna Medical College Hospital (KMCH)", 22.8157, 89.5429, true, "Khulna City", "Khulna"));
+        cityGraph.addVertex(new LocationNode(33, "Satkhira Medical College Hospital", 22.7185, 89.0705, true, "Satkhira", "Khulna"));
+
+        // --- DIVISION 8: BARISHAL DIVISION ---
+        cityGraph.addVertex(new LocationNode(34, "Sher-e-Bangla Medical College Hospital (SBMCH)", 22.6896, 90.3585, true, "Barishal City", "Barishal"));
+        cityGraph.addVertex(new LocationNode(35, "Patuakhali Medical College Hospital", 22.3596, 90.3298, true, "Patuakhali", "Barishal"));
+        cityGraph.addVertex(new LocationNode(36, "Bhola 250 Bed General Hospital", 22.6859, 90.6481, true, "Bhola", "Barishal"));
+
+        // =========================================================================
+        // NATIONAL HIGHWAY ROAD CONNECTIONS (WEIGHTED EDGES IN KILOMETERS)
+        // =========================================================================
+
+        // --- Dhaka Metro Arteries & Outlets ---
+        cityGraph.addEdge(0, 1, 2.5, "Shahbagh / Kazi Nazrul Islam Ave", true);
+        cityGraph.addEdge(1, 2, 2.0, "Panthapath Arterial Rd", true);
+        cityGraph.addEdge(2, 3, 9.5, "Airport Expressway", true);
+        cityGraph.addEdge(3, 4, 18.0, "Dhaka-Mymensingh Highway (N3)", true);
+        cityGraph.addEdge(0, 6, 16.0, "Dhaka-Narayanganj Link Rd", true);
+        cityGraph.addEdge(3, 5, 46.0, "Dhaka-Sylhet Highway (N2)", true);
+        cityGraph.addEdge(0, 9, 74.0, "Padma Bridge Expressway (N8)", true);
+
+        // --- Dhaka to Chattogram Corridor (N1) ---
+        cityGraph.addEdge(6, 10, 82.0, "Dhaka-Chattogram Highway (N1)", true);
+        cityGraph.addEdge(10, 11, 58.0, "Cumilla-Feni Highway (N1)", true);
+        cityGraph.addEdge(11, 12, 72.0, "Feni-Chattogram Highway (N1)", true);
+        cityGraph.addEdge(12, 13, 142.0, "Chattogram-Cox's Bazar Highway (N1)", true);
+        cityGraph.addEdge(11, 14, 42.0, "Feni-Noakhali Regional Highway", true);
+        cityGraph.addEdge(10, 15, 54.0, "Cumilla-Brahmanbaria Highway (N102)", true);
+
+        // --- Dhaka to Sylhet Corridor (N2) ---
+        cityGraph.addEdge(5, 7, 38.0, "Narsingdi-Bhairab Highway (N2)", true);
+        cityGraph.addEdge(7, 15, 26.0, "Bhairab-Brahmanbaria Link (Meghna Bridge)", true);
+        cityGraph.addEdge(15, 18, 68.0, "Brahmanbaria-Habiganj Highway (N2)", true);
+        cityGraph.addEdge(18, 17, 42.0, "Habiganj-Moulvibazar Road", true);
+        cityGraph.addEdge(17, 16, 56.0, "Moulvibazar-Sylhet Highway (N208)", true);
+        cityGraph.addEdge(18, 16, 74.0, "Dhaka-Sylhet Direct Highway (N2)", true);
+
+        // --- Dhaka to Mymensingh Corridor (N3) ---
+        cityGraph.addEdge(4, 19, 95.0, "Dhaka-Mymensingh Highway (N3)", true);
+        cityGraph.addEdge(19, 20, 54.0, "Mymensingh-Jamalpur Highway", true);
+        cityGraph.addEdge(19, 21, 38.0, "Mymensingh-Netrokona Road", true);
+        cityGraph.addEdge(19, 8, 86.0, "Mymensingh-Tangail Highway", true);
+
+        // --- North Bengal Corridor (N4/N5 via Jamuna Bridge) ---
+        cityGraph.addEdge(4, 8, 68.0, "Dhaka-Tangail Expressway (N4)", true);
+        cityGraph.addEdge(8, 22, 45.0, "Bangabandhu Jamuna Bridge Expressway (N405)", true);
+        cityGraph.addEdge(22, 23, 72.0, "Dhaka-Rangpur Highway (N5)", true);
+        cityGraph.addEdge(23, 27, 102.0, "Bogura-Rangpur Highway (N5)", true);
+        cityGraph.addEdge(27, 29, 44.0, "Rangpur-Saidpur Highway (N5)", true);
+        cityGraph.addEdge(29, 28, 36.0, "Saidpur-Dinajpur Highway", true);
+        cityGraph.addEdge(22, 26, 62.0, "Sirajganj-Natore Highway (N6)", true);
+        cityGraph.addEdge(26, 24, 46.0, "Natore-Rajshahi Highway (N6)", true);
+        cityGraph.addEdge(26, 23, 66.0, "Natore-Bogura Highway", true);
+        cityGraph.addEdge(24, 25, 88.0, "Rajshahi-Pabna Highway (N6)", true);
+        cityGraph.addEdge(22, 25, 78.0, "Sirajganj-Pabna Road", true);
+
+        // --- South-West Corridor (Khulna & Barishal via Padma Bridge & Lalon Shah Bridge) ---
+        cityGraph.addEdge(25, 30, 42.0, "Lalon Shah Bridge / Paksey (N704)", true);
+        cityGraph.addEdge(30, 31, 92.0, "Kushtia-Jashore Highway (N7)", true);
+        cityGraph.addEdge(31, 32, 58.0, "Jashore-Khulna Highway (N7)", true);
+        cityGraph.addEdge(32, 33, 64.0, "Khulna-Satkhira Highway", true);
+        cityGraph.addEdge(9, 34, 98.0, "Padma South-Barishal Highway (N8)", true);
+        cityGraph.addEdge(34, 35, 38.0, "Barishal-Patuakhali Highway (N8)", true);
+        cityGraph.addEdge(34, 36, 32.0, "Barishal-Bhola Link Highway", true);
+        cityGraph.addEdge(9, 31, 95.0, "Faridpur-Magura-Jashore Highway (N702)", true);
+        cityGraph.addEdge(9, 30, 98.0, "Faridpur-Rajbari-Kushtia Highway", true);
+        cityGraph.addEdge(32, 34, 118.0, "Khulna-Barishal Highway (N805)", true);
     }
 
     /**
-     * Pre-populates realistic registered blood donors located across Dhaka.
+     * Pre-populates registered blood donors distributed across all 8 administrative divisions of Bangladesh.
      */
     private void initializeDefaultDonors() {
-        donorRegistry.addLast(new Donor("D-101", "Tanvir Ahmed", BloodType.O_NEG, 4, "+8801711223344", true, "Green Road, Dhanmondi"));
-        donorRegistry.addLast(new Donor("D-102", "Sadia Rahman", BloodType.A_POS, 5, "+8801819334455", true, "Panthapath, Dhaka"));
-        donorRegistry.addLast(new Donor("D-103", "Kazi Farhan", BloodType.B_POS, 10, "+8801912445566", true, "Asad Gate, Mohammadpur"));
-        donorRegistry.addLast(new Donor("D-104", "Nusrat Jahan", BloodType.AB_POS, 3, "+8801613556677", true, "Science Lab, Dhanmondi"));
-        donorRegistry.addLast(new Donor("D-105", "Mahmudul Hasan", BloodType.O_POS, 7, "+8801724667788", true, "Farmgate, Tejgaon"));
-        donorRegistry.addLast(new Donor("D-106", "Ayesha Siddiqua", BloodType.O_NEG, 13, "+8801835778899", true, "Gulshan-1, Dhaka"));
-        donorRegistry.addLast(new Donor("D-107", "Rifat Hossain", BloodType.A_NEG, 15, "+8801946889900", true, "Mirpur 10, Dhaka"));
-        donorRegistry.addLast(new Donor("D-108", "Shakil Chowdhury", BloodType.B_NEG, 8, "+8801557990011", true, "Sher-e-Bangla Nagar"));
-        donorRegistry.addLast(new Donor("D-109", "Farhana Akter", BloodType.AB_NEG, 14, "+8801768001122", true, "Road 11, Banani"));
-        donorRegistry.addLast(new Donor("D-110", "Imtiaz Karim", BloodType.O_POS, 0, "+8801879112233", true, "Old Dhaka / Bakshibazar"));
-        donorRegistry.addLast(new Donor("D-111", "Tasnim Sultana", BloodType.A_POS, 9, "+8801980223344", true, "Agargaon, Dhaka"));
-        donorRegistry.addLast(new Donor("D-112", "Zubair Al-Mamun", BloodType.B_POS, 17, "+8801691334455", true, "Sector 3, Uttara"));
-        donorRegistry.addLast(new Donor("D-113", "Mehedi Hassan", BloodType.O_NEG, 6, "+8801712445566", false, "Kawran Bazar (Unavailable)"));
-        donorRegistry.addLast(new Donor("D-114", "Rubina Yasmin", BloodType.A_POS, 1, "+8801823556677", true, "Shahbagh, Dhaka"));
+        // Dhaka Division
+        donorRegistry.addLast(new Donor("D-101", "Tanvir Ahmed", BloodType.O_NEG, 0, "+8801711223344", true, "DMCH, Old Dhaka"));
+        donorRegistry.addLast(new Donor("D-102", "Sadia Rahman", BloodType.A_POS, 2, "+8801819334455", true, "Square Hospital, Panthapath"));
+        donorRegistry.addLast(new Donor("D-103", "Mahmudul Hasan", BloodType.O_POS, 4, "+8801724667788", true, "Chowrasta, Gazipur"));
+        donorRegistry.addLast(new Donor("D-104", "Kazi Farhan", BloodType.B_POS, 1, "+8801912445566", true, "Shahbagh, Dhaka"));
+        donorRegistry.addLast(new Donor("D-105", "Nusrat Jahan", BloodType.AB_POS, 3, "+8801613556677", true, "Kurmitola / Cantonment"));
+
+        // Chattogram Division
+        donorRegistry.addLast(new Donor("D-106", "Saifullah Mansur", BloodType.O_NEG, 12, "+8801835778899", true, "Panchlaish, Chattogram"));
+        donorRegistry.addLast(new Donor("D-107", "Mehnaz Parveen", BloodType.B_POS, 10, "+8801736889900", true, "Kandirpar, Cumilla"));
+        donorRegistry.addLast(new Donor("D-108", "Rashedul Karim", BloodType.A_POS, 11, "+8801937990011", true, "Trunk Road, Feni"));
+        donorRegistry.addLast(new Donor("D-109", "Tarequl Islam", BloodType.O_POS, 13, "+8801638001122", true, "Kolatoli, Cox's Bazar"));
+        donorRegistry.addLast(new Donor("D-110", "Jannatul Ferdous", BloodType.AB_NEG, 14, "+8801839112233", true, "Maijdee Court, Noakhali"));
+        donorRegistry.addLast(new Donor("D-111", "Ashfaqur Rahman", BloodType.B_NEG, 15, "+8801530223344", true, "Medda, Brahmanbaria"));
+
+        // Sylhet Division
+        donorRegistry.addLast(new Donor("D-112", "Shahriar Kabir", BloodType.O_NEG, 16, "+8801741334455", true, "Amberkhana, Sylhet"));
+        donorRegistry.addLast(new Donor("D-113", "Nazia Chowdhury", BloodType.A_POS, 17, "+8801842445566", true, "Sreemangal Rd, Moulvibazar"));
+        donorRegistry.addLast(new Donor("D-114", "Mahir Faisal", BloodType.B_POS, 18, "+8801943556677", true, "New Bus Stand, Habiganj"));
+
+        // Mymensingh Division
+        donorRegistry.addLast(new Donor("D-115", "Kamrul Ahsan", BloodType.O_POS, 19, "+8801644667788", true, "Charpara, Mymensingh"));
+        donorRegistry.addLast(new Donor("D-116", "Shanjida Akter", BloodType.A_NEG, 20, "+8801745778899", true, "Station Rd, Jamalpur"));
+        donorRegistry.addLast(new Donor("D-117", "Moniruzzaman", BloodType.B_POS, 21, "+8801846889900", true, "Choto Bazar, Netrokona"));
+
+        // Rajshahi Division
+        donorRegistry.addLast(new Donor("D-118", "Asadul Islam", BloodType.O_NEG, 24, "+8801947990011", true, "Laxmipur, Rajshahi"));
+        donorRegistry.addLast(new Donor("D-119", "Farzana Haque", BloodType.A_POS, 23, "+8801548001122", true, "Thanthania, Bogura"));
+        donorRegistry.addLast(new Donor("D-120", "Tariqul Anam", BloodType.B_POS, 22, "+8801749112233", true, "Mujib Sarak, Sirajganj"));
+        donorRegistry.addLast(new Donor("D-121", "Shamim Reza", BloodType.O_POS, 25, "+8801850223344", true, "Abdul Hamid Rd, Pabna"));
+        donorRegistry.addLast(new Donor("D-122", "Mustafizur Rahman", BloodType.AB_POS, 26, "+8801951334455", true, "Kanaikhali, Natore"));
+
+        // Rangpur Division
+        donorRegistry.addLast(new Donor("D-123", "Rafiqul Islam", BloodType.O_POS, 27, "+8801652445566", true, "Dhap, Rangpur"));
+        donorRegistry.addLast(new Donor("D-124", "Sabrina Yasmin", BloodType.B_POS, 28, "+8801753556677", true, "Goneshtola, Dinajpur"));
+        donorRegistry.addLast(new Donor("D-125", "Atikur Rahman", BloodType.A_POS, 29, "+8801854667788", true, "Railway Colony, Saidpur"));
+
+        // Khulna Division
+        donorRegistry.addLast(new Donor("D-126", "Anisur Rahman", BloodType.O_NEG, 32, "+8801955778899", true, "Boyra, Khulna"));
+        donorRegistry.addLast(new Donor("D-127", "Bilkis Ara", BloodType.A_POS, 31, "+8801556889900", true, "Chowrasta, Jashore"));
+        donorRegistry.addLast(new Donor("D-128", "Zahid Hasan", BloodType.B_POS, 30, "+8801757990011", true, "NS Road, Kushtia"));
+        donorRegistry.addLast(new Donor("D-129", "Faruk Hossain", BloodType.O_POS, 33, "+8801858001122", true, "Palashpole, Satkhira"));
+
+        // Barishal Division
+        donorRegistry.addLast(new Donor("D-130", "Moinul Islam", BloodType.O_NEG, 34, "+8801959112233", true, "Band Road, Barishal"));
+        donorRegistry.addLast(new Donor("D-131", "Sharmin Sultana", BloodType.B_POS, 35, "+8801660223344", true, "Sadar Rd, Patuakhali"));
+        donorRegistry.addLast(new Donor("D-132", "Jahangir Alam", BloodType.A_POS, 36, "+8801761334455", true, "Ukheel Para, Bhola"));
+        donorRegistry.addLast(new Donor("D-133", "Mehedi Hassan", BloodType.O_NEG, 1, "+8801862445566", false, "Shahbagh, Dhaka (Busy)"));
+        donorRegistry.addLast(new Donor("D-134", "Rubina Yasmin", BloodType.A_POS, 9, "+8801963556677", true, "Goalchamot, Faridpur"));
     }
 }

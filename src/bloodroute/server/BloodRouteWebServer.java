@@ -46,7 +46,7 @@ public class BloodRouteWebServer {
         server.start();
         System.out.println("==================================================================");
         System.out.println(" 🩸 BloodRoute Web Server is LIVE at: http://localhost:" + port);
-        System.out.println(" Open this URL in your web browser to view the Dhaka Emergency Map!");
+        System.out.println(" Open this URL in your web browser to view the Bangladesh Emergency Map!");
         System.out.println("==================================================================");
     }
 
@@ -74,8 +74,8 @@ public class BloodRouteWebServer {
             for (LocationNode node : nodes) {
                 if (node != null) {
                     if (!firstNode) json.append(",");
-                    json.append(String.format("{\"id\":%d,\"name\":\"%s\",\"lat\":%.4f,\"lng\":%.4f,\"isHospital\":%b,\"area\":\"%s\"}",
-                            node.getId(), escapeJson(node.getName()), node.getLatitude(), node.getLongitude(), node.isHospital(), escapeJson(node.getArea())));
+                    json.append(String.format("{\"id\":%d,\"name\":\"%s\",\"lat\":%.4f,\"lng\":%.4f,\"isHospital\":%b,\"area\":\"%s\",\"division\":\"%s\"}",
+                            node.getId(), escapeJson(node.getName()), node.getLatitude(), node.getLongitude(), node.isHospital(), escapeJson(node.getArea()), escapeJson(node.getDivision())));
                     firstNode = false;
                 }
             }
@@ -283,9 +283,10 @@ public class BloodRouteWebServer {
     private String donorToJson(Donor d) {
         LocationNode node = service.getCityGraph().getNode(d.getLocationNodeId());
         String area = node != null ? node.getArea() : "Unknown";
-        return String.format("{\"id\":\"%s\",\"name\":\"%s\",\"bloodType\":\"%s\",\"nodeId\":%d,\"area\":\"%s\",\"phone\":\"%s\",\"isAvailable\":%b,\"address\":\"%s\"}",
+        String division = node != null ? node.getDivision() : "Unknown";
+        return String.format("{\"id\":\"%s\",\"name\":\"%s\",\"bloodType\":\"%s\",\"nodeId\":%d,\"area\":\"%s\",\"division\":\"%s\",\"phone\":\"%s\",\"isAvailable\":%b,\"address\":\"%s\"}",
                 escapeJson(d.getDonorId()), escapeJson(d.getName()), d.getBloodType().getLabel(),
-                d.getLocationNodeId(), escapeJson(area), escapeJson(d.getPhoneNumber()), d.isAvailable(), escapeJson(d.getAddress()));
+                d.getLocationNodeId(), escapeJson(area), escapeJson(division), escapeJson(d.getPhoneNumber()), d.isAvailable(), escapeJson(d.getAddress()));
     }
 
     private String escapeJson(String input) {

@@ -190,6 +190,20 @@ body {
     border-color: var(--primary-red);
 }
 
+optgroup {
+    background-color: #1e293b;
+    color: var(--accent-blue);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+option {
+    background-color: #0b1329;
+    color: #fff;
+    font-size: 13px;
+    padding: 4px;
+}
+
 /* Blood Button Grid */
 .blood-grid {
     display: grid;

@@ -173,7 +173,8 @@ public class DijkstraRouter {
             }
         }
 
-        double etaMinutes = reachable ? (totalDist / 25.0) * 60.0 : -1.0;
+        double avgSpeedKmH = totalDist < 30.0 ? 35.0 : 65.0;
+        double etaMinutes = reachable ? (totalDist / avgSpeedKmH) * 60.0 : -1.0;
 
         return new RoutingResult(source, destination, totalDist, path, etaMinutes, reachable, steps);
     }

@@ -85,14 +85,14 @@ public class Main {
         System.out.println("=================================================================================");
         System.out.println("  🩸 BLOODROUTE: EMERGENCY BLOOD DONOR MATCHING & ROUTING SYSTEM");
         System.out.println("  Data Structures & Algorithms | Real-Life Emergency System");
-        System.out.println("  Location Anchor: Dhaka City Road Network & Medical Facilities");
+        System.out.println("  Location Anchor: Bangladesh Nationwide Medical Network & National Highways");
         System.out.println("  Web Interface:   http://localhost:" + WEB_PORT);
         System.out.println("=================================================================================");
     }
 
     private static void printMenu() {
         System.out.println("\n------------------------------ MAIN MENU ------------------------------");
-        System.out.println(" [1] View Dhaka Road Network Graph (Adjacency List)");
+        System.out.println(" [1] View Bangladesh Road Network Graph (Adjacency List)");
         System.out.println(" [2] Display All Registered Donors");
         System.out.println(" [3] Search Donor by ID (Algorithm 2: Linear Search)");
         System.out.println(" [4] Emergency Blood Request (Algorithm 1: Dijkstra Shortest Path)");
@@ -104,7 +104,7 @@ public class Main {
     }
 
     private static void handleDisplayNetwork(BloodRouteService service) {
-        System.out.println("\n--- DHAKA ROAD NETWORK (GRAPH ADJACENCY LIST) ---");
+        System.out.println("\n--- BANGLADESH ROAD NETWORK (GRAPH ADJACENCY LIST) ---");
         LocationNode[] nodes = service.getCityGraph().getAllNodes();
         for (int i = 0; i < service.getCityGraph().getNumVertices(); i++) {
             LocationNode node = nodes[i];
@@ -122,7 +122,7 @@ public class Main {
     }
 
     private static void handleDisplayDonors(BloodRouteService service) {
-        System.out.println("\n--- REGISTERED BLOOD DONORS IN DHAKA ---");
+        System.out.println("\n--- REGISTERED BLOOD DONORS IN BANGLADESH ---");
         System.out.printf("%-8s | %-18s | %-6s | %-24s | %-15s | %-10s\n",
                 "ID", "Name", "Blood", "Area / Landmark", "Phone", "Status");
         System.out.println("-----------------------------------------------------------------------------------------");
@@ -161,15 +161,20 @@ public class Main {
 
     private static void handleEmergencyRequest(BloodRouteService service, Scanner scanner) {
         System.out.println("\n--- EMERGENCY BLOOD REQUEST DISPATCH ---");
-        System.out.println("Available Hospitals / Locations:");
+        System.out.println("Available Hospitals across Bangladesh (by Division):");
         LocationNode[] nodes = service.getCityGraph().getAllNodes();
+        String currentDiv = "";
         for (LocationNode n : nodes) {
             if (n != null && n.isHospital()) {
-                System.out.printf("   [%2d] %s (%s)\n", n.getId(), n.getName(), n.getArea());
+                if (!n.getDivision().equals(currentDiv)) {
+                    currentDiv = n.getDivision();
+                    System.out.println("\n  [" + currentDiv.toUpperCase() + " DIVISION]");
+                }
+                System.out.printf("     [%2d] %-45s (%s)\n", n.getId(), n.getName(), n.getArea());
             }
         }
 
-        System.out.print("\nEnter Requester Hospital Node ID (e.g., 0 for DMCH, 5 for Square): ");
+        System.out.print("\nEnter Requester Hospital Node ID (e.g., 0 for DMCH, 12 for CMCH): ");
         int reqNode;
         try {
             reqNode = Integer.parseInt(scanner.nextLine().trim());
@@ -275,7 +280,7 @@ public class Main {
                 return;
             }
 
-            System.out.print("Enter Location Node ID (0-17): ");
+            System.out.printf("Enter Location Node ID (0-%d): ", service.getCityGraph().getActiveVerticesCount() - 1);
             int nodeId = Integer.parseInt(scanner.nextLine().trim());
 
             System.out.print("Enter Phone Number: ");

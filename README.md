@@ -1,7 +1,7 @@
 # BloodRoute 🩸
 > **Emergency Blood Donor Matching & Proximity Routing System**  
 > *Data Structures & Algorithms Real-World Application*  
-> *Anchor City: Dhaka Metropolitan Road Network & Healthcare Facilities*
+> *Coverage: Bangladesh Nationwide Medical Network & National Highways (All 8 Divisions)*
 
 ---
 
@@ -9,9 +9,9 @@
 
 1. **Biological Blood Compatibility Engine**:
    - Encapsulates ABO and Rh blood group transfusion logic ($O^-$ Universal Donor, $AB^+$ Universal Recipient).
-2. **Real-World Geographic Map (Dhaka, Bangladesh)**:
-   - Interactive OpenStreetMap & Leaflet web interface showing real hospitals (DMCH, BSMMU, Square, Central, Suhrawardy) and road networks.
-   - Dynamic animated polyline tracing the exact shortest route on city streets from the hospital to the nearest donor.
+2. **Real-World Geographic Map (All 8 Divisions of Bangladesh)**:
+   - Interactive OpenStreetMap & Leaflet web interface showing tertiary medical college hospitals across Dhaka, Chattogram, Sylhet, Mymensingh, Rajshahi, Rangpur, Khulna, and Barishal.
+   - Dynamic animated polyline tracing the exact shortest route on national highways from hospitals to the nearest donors.
 3. **Pure Java Embedded Architecture**:
    - Uses Java standard library `com.sun.net.httpserver.HttpServer`.
    - **Zero external frameworks/dependencies** (no Maven/Gradle, Node.js, or Spring required). Compiles cleanly with standard `javac`.

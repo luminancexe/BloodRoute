@@ -25,18 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Initializes the Leaflet Real Map centered over Dhaka
+ * Initializes the Leaflet Real Map centered over Bangladesh
  */
 function initMap() {
-    // Dhaka City Center: 23.765, 90.39
+    // Center of Bangladesh: 23.85, 90.25 (Zoom 7 shows all 8 divisions)
     map = L.map('map', {
         zoomControl: true
-    }).setView([23.765, 90.39], 13);
+    }).setView([23.85, 90.25], 7);
 
     // High quality OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | BloodRoute DSA'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | BloodRoute Bangladesh'
     }).addTo(map);
 }
 
@@ -62,7 +62,7 @@ async function loadNetworkAndDonors() {
 }
 
 /**
- * Populates location selectors in UI
+ * Populates location selectors in UI grouped by Division
  */
 function populateDropdowns() {
     const requesterSelect = document.getElementById('requesterSelect');
@@ -71,17 +71,36 @@ function populateDropdowns() {
     requesterSelect.innerHTML = '';
     regLocationSelect.innerHTML = '';
 
+    // Group nodes by division
+    const divisions = {};
     networkData.nodes.forEach(node => {
-        const option = document.createElement('option');
-        option.value = node.id;
-        option.textContent = `${node.name} (${node.area})${node.isHospital ? ' [Hospital]' : ''}`;
-        
-        // Default requester to Dhaka Medical College (Node 0)
-        if (node.id === 0) option.selected = true;
-        requesterSelect.appendChild(option);
+        const div = node.division || 'General';
+        if (!divisions[div]) divisions[div] = [];
+        divisions[div].push(node);
+    });
 
-        const regOption = option.cloneNode(true);
-        regLocationSelect.appendChild(regOption);
+    Object.keys(divisions).forEach(divName => {
+        const optgroupReq = document.createElement('optgroup');
+        optgroupReq.label = `${divName} Division`;
+
+        const optgroupReg = document.createElement('optgroup');
+        optgroupReg.label = `${divName} Division`;
+
+        divisions[divName].forEach(node => {
+            const option = document.createElement('option');
+            option.value = node.id;
+            option.textContent = `${node.name} (${node.area})${node.isHospital ? ' [Hospital]' : ''}`;
+            
+            // Default requester to Dhaka Medical College (Node 0)
+            if (node.id === 0) option.selected = true;
+            optgroupReq.appendChild(option);
+
+            const regOption = option.cloneNode(true);
+            optgroupReg.appendChild(regOption);
+        });
+
+        requesterSelect.appendChild(optgroupReq);
+        regLocationSelect.appendChild(optgroupReg);
     });
 }
 
@@ -131,13 +150,13 @@ function renderNetworkGraph() {
         });
 
         const marker = L.marker([node.lat, node.lng], { icon: customIcon }).addTo(map);
-        marker.bindPopup(`<strong>${node.name}</strong><br>Area: ${node.area}<br>Type: ${isHosp ? 'Hospital' : 'Intersection'}`);
+        marker.bindPopup(`<strong>${node.name}</strong><br>Division: <strong>${node.division || 'Bangladesh'}</strong><br>Area: ${node.area}<br>Type: ${isHosp ? 'Hospital' : 'Highway Intersection'}`);
         nodeMarkers[node.id] = marker;
     });
 }
 
 /**
- * Renders donor markers across Dhaka with blood badges
+ * Renders donor markers across Bangladesh with blood badges
  */
 function renderDonorsOnMap(donors) {
     donorMarkers.forEach(m => map.removeLayer(m));
@@ -178,7 +197,7 @@ function renderDonorsOnMap(donors) {
             Blood Group: <strong>${donor.bloodType}</strong><br>
             Status: ${donor.isAvailable ? '🟢 Available' : '🔴 Busy'}<br>
             Phone: <a href="tel:${donor.phone}">${donor.phone}</a><br>
-            Location: ${donor.area}
+            Location: ${donor.area} (${donor.division || 'Bangladesh'})
         `);
         donorMarkers.push(marker);
     });
