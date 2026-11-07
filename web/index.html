@@ -3,200 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BloodRoute — Bangladesh Emergency Blood Donor Matching & Routing</title>
-    <!-- Leaflet CSS for Real Map -->
+    <title>BloodRoute — Emergency Blood Logistics & Proximity Routing</title>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Top Navigation Header -->
     <header class="app-header">
-        <div class="brand">
-            <span class="blood-drop">🩸</span>
-            <div class="brand-text">
-                <h1>BloodRoute</h1>
-                <p>Bangladesh Emergency Blood Logistics & Proximity Routing</p>
+        <div class="header-left">
+            <div class="brand">
+                <div class="brand-logo" aria-hidden="true">
+                    <!-- Bespoke BloodRoute Vector Emblem -->
+                    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoDropGrad" x1="16" y1="2" x2="16" y2="30" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#FF4D6D"/>
+                                <stop offset="45%" stop-color="#DC2626"/>
+                                <stop offset="100%" stop-color="#991B1B"/>
+                            </linearGradient>
+                            <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#DC2626" flood-opacity="0.45"/>
+                            </filter>
+                        </defs>
+                        <!-- Stylized Teardrop Outline with Medical Cross & Routing Node -->
+                        <path d="M16 2.5C16 2.5 28 16 28 22.5C28 27.2 22.6 30.5 16 30.5C9.4 30.5 4 27.2 4 22.5C4 16 16 2.5 16 2.5Z" 
+                              fill="url(#logoDropGrad)" filter="url(#logoGlow)"/>
+                        <!-- Gloss highlight -->
+                        <path d="M16 5.5C16 5.5 23 16 23 21C22 17 19 10 16 5.5Z" fill="#FFFFFF" fill-opacity="0.35"/>
+                        <!-- White Cross & Central Route Node -->
+                        <rect x="14.5" y="16.5" width="3" height="9" rx="1" fill="#FFFFFF"/>
+                        <rect x="11.5" y="19.5" width="9" height="3" rx="1" fill="#FFFFFF"/>
+                        <circle cx="16" cy="21" r="1.5" fill="#DC2626"/>
+                    </svg>
+                </div>
+                <div class="brand-identity">
+                    <span class="brand-name">Blood<span class="brand-accent">Route</span></span>
+                    <span class="brand-tagline">Emergency Blood Logistics & Proximity Routing</span>
+                </div>
             </div>
         </div>
-        <div class="header-badges">
-            <span class="dsa-badge">DSA Project</span>
-            <span class="live-status"><span class="pulse-dot"></span> Java Backend Active</span>
+
+        <div class="header-center">
+            <div class="telemetry-bar">
+                <div class="telemetry-item">
+                    <span class="pulse-beacon"></span>
+                    <span class="telemetry-label">Network Status:</span>
+                    <span class="telemetry-value" id="systemStatusText">Operational</span>
+                </div>
+                <div class="telemetry-divider"></div>
+                <div class="telemetry-item">
+                    <svg class="telemetry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                    <span class="telemetry-label">Facilities:</span>
+                    <span class="telemetry-value" id="facilityCountText">88 Connected</span>
+                </div>
+                <div class="telemetry-divider"></div>
+                <div class="telemetry-item">
+                    <svg class="telemetry-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span class="telemetry-label">Engine:</span>
+                    <span class="telemetry-value">Dijkstra Min-Heap</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button type="button" id="headerRegisterDonorBtn" class="btn btn-header">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" y1="8" x2="19" y2="14"/>
+                    <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+                <span>Register Donor</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Application Container -->
+    <!-- Main Dashboard Workspace -->
     <main class="main-layout">
-        <!-- Left Sidebar: Controls & Match Results -->
-        <aside class="sidebar">
-            <!-- Emergency Dispatch Form -->
-            <section class="card emergency-card">
-                <div class="card-title">
-                    <span class="icon">🚨</span>
-                    <h2>Emergency Blood Request</h2>
-                </div>
-                
-                <div class="form-group">
-                    <label for="requesterSelect">Requester / Hospital Location:</label>
-                    <select id="requesterSelect" class="form-control">
-                        <option value="">Loading Bangladesh locations...</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="bloodTypeSelect">Patient Required Blood Group:</label>
-                    <div class="blood-grid">
-                        <button type="button" class="blood-btn" data-type="O+">O+</button>
-                        <button type="button" class="blood-btn" data-type="O-">O-</button>
-                        <button type="button" class="blood-btn active" data-type="A+">A+</button>
-                        <button type="button" class="blood-btn" data-type="A-">A-</button>
-                        <button type="button" class="blood-btn" data-type="B+">B+</button>
-                        <button type="button" class="blood-btn" data-type="B-">B-</button>
-                        <button type="button" class="blood-btn" data-type="AB+">AB+</button>
-                        <button type="button" class="blood-btn" data-type="AB-">AB-</button>
+        <!-- Left Sidebar: Emergency Dispatcher & Donor Match Results -->
+        <aside class="sidebar-panel">
+            <!-- 1. Emergency Blood Request Form -->
+            <section class="panel-section request-section">
+                <div class="section-header">
+                    <div class="section-title-wrap">
+                        <div class="section-icon-badge">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="section-title">Emergency Blood Request</h2>
+                            <p class="section-subtitle">Real-time proximity matching & shortest-path dispatch</p>
+                        </div>
                     </div>
-                    <input type="hidden" id="selectedBloodType" value="A+">
                 </div>
 
-                <div class="simulation-toggle-row">
-                    <label class="toggle-container">
-                        <input type="checkbox" id="simToggle" checked>
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">✨ Visual Algorithm Simulation</span>
-                    </label>
-                </div>
+                <!-- Form Controls -->
+                <div class="form-body">
+                    <!-- Hospital Search Combobox -->
+                    <div class="form-field">
+                        <label for="hospitalSearchInput" class="field-label">
+                            <span>Requester Location (Hospital / Hub)</span>
+                            <span class="field-required">*</span>
+                        </label>
+                        <div class="searchable-combobox" id="hospitalSearchableContainer">
+                            <div class="search-input-shell">
+                                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                <input type="text" id="hospitalSearchInput" class="form-input search-input" 
+                                       placeholder="Search hospital or area (e.g. DMCH, Labaid, Square)..." autocomplete="off" spellcheck="false">
+                                <button type="button" id="clearHospitalSearchBtn" class="clear-btn hidden" title="Clear search" aria-label="Clear search">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="hospitalDropdownList" class="combobox-dropdown hidden" role="listbox"></div>
+                        </div>
 
-                <button id="findDonorBtn" class="btn btn-emergency">
-                    ⚡ Find Nearest Compatible Donor
-                </button>
+                        <!-- Selected Hospital Detailed Card -->
+                        <div id="selectedHospitalCard" class="selected-facility-card">
+                            <div class="facility-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                            </div>
+                            <div class="facility-details">
+                                <span class="facility-name" id="selectedHospitalName">Dhaka Medical College Hospital (DMCH)</span>
+                                <div class="facility-meta">
+                                    <span class="meta-tag" id="selectedHospitalArea">Bakshibazar, Dhaka</span>
+                                    <span class="meta-divider">•</span>
+                                    <span class="meta-phone" id="selectedHospitalPhone">+880255165656</span>
+                                </div>
+                            </div>
+                            <button type="button" id="locateHospitalBtn" class="btn-locate" title="Center map on this facility">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="22" y1="12" x2="18" y2="12"/>
+                                    <line x1="6" y1="12" x2="2" y2="12"/>
+                                    <line x1="12" y1="6" x2="12" y2="2"/>
+                                    <line x1="12" y1="22" x2="12" y2="18"/>
+                                </svg>
+                                <span>Focus</span>
+                            </button>
+                        </div>
+
+                        <!-- Hidden native select for 100% backward compatibility with REST calls -->
+                        <select id="requesterSelect" class="visually-hidden" aria-hidden="true">
+                            <option value="0">Dhaka Medical College Hospital (DMCH)</option>
+                        </select>
+                    </div>
+
+                    <!-- Blood Group Selection -->
+                    <div class="form-field">
+                        <label for="bloodTypeSelect" class="field-label">
+                            <span>Patient Required Blood Group</span>
+                            <span class="field-required">*</span>
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="bloodTypeSelect" class="form-select">
+                                <option value="O+">O+ (Rh Positive)</option>
+                                <option value="O-">O- (Universal Donor)</option>
+                                <option value="A+" selected>A+ (Rh Positive)</option>
+                                <option value="A-">A- (Rh Negative)</option>
+                                <option value="B+">B+ (Rh Positive)</option>
+                                <option value="B-">B- (Rh Negative)</option>
+                                <option value="AB+">AB+ (Universal Recipient)</option>
+                                <option value="AB-">AB- (Rh Negative)</option>
+                            </select>
+                            <input type="hidden" id="selectedBloodType" value="A+">
+                            <svg class="select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Visual Simulation Toggle Switch -->
+                    <div class="form-field-toggle">
+                        <label class="switch-control" for="simToggle">
+                            <input type="checkbox" id="simToggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <div class="toggle-text">
+                            <span class="toggle-title">Live Route Exploration</span>
+                            <span class="toggle-desc">Visualize Dijkstra min-heap path traversal step-by-step</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary Dispatch Action -->
+                    <button type="button" id="findDonorBtn" class="btn btn-dispatch">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        <span id="findDonorBtnText">Find Compatible Donors</span>
+                    </button>
+                </div>
             </section>
 
-            <!-- Nearest Donor Highlight Card -->
-            <section id="nearestDonorCard" class="card nearest-card hidden">
-                <div class="card-title">
-                    <span class="icon">🏆</span>
-                    <h2>Top Nearest Match (Dijkstra)</h2>
-                </div>
-                <div class="donor-hero">
-                    <div class="donor-avatar" id="heroBloodGroup">A+</div>
-                    <div class="donor-primary-info">
-                        <h3 id="heroDonorName">Tanvir Ahmed</h3>
-                        <p class="donor-location" id="heroLocationArea">📍 Green Road, Dhanmondi</p>
+            <!-- 2. Top Nearest Match: Refined Primary Responder Card -->
+            <section id="nearestDonorCard" class="panel-section responder-card hidden">
+                <div class="responder-card-top">
+                    <div class="responder-identity-group">
+                        <div class="blood-type-tag" id="heroBloodGroup">A+</div>
+                        <div class="responder-info">
+                            <div class="responder-title-line">
+                                <h3 class="responder-name" id="heroDonorName">Tanvir Ahmed</h3>
+                                <span class="verified-pill" title="Verified Available Donor">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    <span>Verified</span>
+                                </span>
+                            </div>
+                            <div class="responder-location-line">
+                                <span id="heroLocationArea">Green Road, Dhanmondi</span>
+                                <span class="dot-sep">•</span>
+                                <span class="status-indicator-live">Available</span>
+                            </div>
+                        </div>
                     </div>
+                    <a href="#" id="heroPhoneLink" class="btn-direct-call" title="Call Donor Directly">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                        <span id="heroPhoneText">Call Donor</span>
+                    </a>
                 </div>
-                <div class="metrics-row">
-                    <div class="metric">
-                        <span class="metric-label">Road Distance</span>
-                        <span class="metric-value" id="heroDistance">0.0 km</span>
+
+                <!-- Emergency Transit Metrics -->
+                <div class="responder-metrics-row">
+                    <div class="metric-cell">
+                        <span class="metric-label" id="heroDistLabel">OSRM Road Distance</span>
+                        <span class="metric-number" id="heroDistance">0.0 km</span>
+                        <span class="metric-caption" id="heroDistSub">Live road route</span>
                     </div>
-                    <div class="metric">
+                    <div class="metric-cell-divider"></div>
+                    <div class="metric-cell">
                         <span class="metric-label">Estimated Transit</span>
-                        <span class="metric-value" id="heroEta">0 mins</span>
+                        <span class="metric-number" id="heroEta">0 mins</span>
+                        <span class="metric-caption" id="heroEtaSub">Driving duration</span>
                     </div>
                 </div>
-                <div class="contact-box">
-                    <span class="contact-label">Emergency Phone:</span>
-                    <a href="#" id="heroPhone" class="phone-link">+8801700000000</a>
-                </div>
-                <div class="route-summary">
-                    <strong>Shortest Path Route:</strong>
-                    <div id="heroPathSequence" class="path-sequence">Hospital &rarr; Donor</div>
-                </div>
+
+                <!-- Hidden elements for backward compatibility with status setters -->
+                <span id="heroProviderBadge" class="visually-hidden"><span id="heroProviderText">OSRM Live Navigation</span></span>
+
+                <!-- Collapsible DSA Technical Details & Navigation Steps -->
+                <details class="tech-accordion" id="techDetailsAccordion">
+                    <summary class="tech-accordion-summary">
+                        <div class="summary-left">
+                            <svg class="summary-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                            <span>Routing Telemetry & Directions</span>
+                        </div>
+                        <span class="summary-tag" id="techSummaryTag">Dijkstra Min-Heap</span>
+                    </summary>
+                    <div class="tech-accordion-body">
+                        <div class="tech-row">
+                            <span class="tech-field-name">Dijkstra Graph Distance:</span>
+                            <span class="tech-field-val" id="heroDsaDistanceText">0.00 km</span>
+                        </div>
+                        <div class="tech-row">
+                            <span class="tech-field-name">Routing Engine:</span>
+                            <span class="tech-field-val" id="heroRoutingTag">OSRM Live Road Route</span>
+                        </div>
+                        <div class="tech-row-block">
+                            <span class="tech-field-name">Computed Node Sequence:</span>
+                            <div class="tech-path-crumbs" id="heroPathSequence">Hospital &rarr; Donor</div>
+                        </div>
+                        <div class="tech-directions-block" id="directionsDrawer">
+                            <div class="directions-header">
+                                <span class="tech-field-name">Turn-by-Turn Road Guidance</span>
+                                <span class="directions-count" id="directionsStepBadge">0 steps</span>
+                            </div>
+                            <div class="directions-list" id="directionsList">
+                                <!-- Steps dynamically rendered -->
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </section>
 
-            <!-- Ranked Donor List -->
-            <section class="card results-card">
-                <div class="card-title">
-                    <span class="icon">📋</span>
-                    <h2>Ranked Compatible Donors (<span id="matchCount">0</span>)</h2>
+            <!-- 3. Ranked Compatible Donors List -->
+            <section class="panel-section results-section">
+                <div class="section-header">
+                    <div class="section-title-wrap">
+                        <div class="section-icon-badge muted">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="results-title-row">
+                                <h2 class="section-title">Compatible Donors</h2>
+                                <span class="counter-pill" id="matchCount">0</span>
+                            </div>
+                            <p class="section-subtitle">Ranked strictly by network road distance</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="rankedDonorList" class="donor-list">
-                    <p class="placeholder-text">Submit an emergency request above to rank matching donors by road distance.</p>
+
+                <div id="rankedDonorList" class="donor-scroll-container">
+                    <div class="empty-state-card">
+                        <svg class="empty-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <p class="empty-title">No Search Executed</p>
+                        <p class="empty-desc">Select a requester hospital and blood group above, then click <strong>Find Compatible Donors</strong> to compute real-time proximity rankings.</p>
+                    </div>
                 </div>
             </section>
-
-            <!-- Register Donor Toggle Button -->
-            <button id="openRegisterModalBtn" class="btn btn-secondary">
-                ➕ Register New Blood Donor
-            </button>
         </aside>
 
-        <!-- Right: Real OpenStreetMap Interactive Canvas -->
+        <!-- Right Panel: Interactive Real Map & Telemetry HUD -->
         <section class="map-container">
-            <!-- Floating Simulation HUD -->
-            <div id="simHud" class="sim-hud hidden">
-                <div class="sim-hud-header">
-                    <span class="sim-badge" id="simBadge">DIJKSTRA MIN-HEAP</span>
-                    <span class="sim-step-text" id="simStepText">Step 0 / 0</span>
-                    <button id="simSkipBtn" class="sim-btn-skip">Skip ⏩</button>
+            <!-- Floating Simulation Telemetry HUD -->
+            <div id="simHud" class="simulation-hud hidden" role="status" aria-live="polite">
+                <div class="sim-hud-top">
+                    <div class="sim-status-chip">
+                        <span class="sim-pulse-dot"></span>
+                        <span class="sim-chip-label">Routing Engine</span>
+                    </div>
+                    <span class="sim-action-badge" id="simBadge">EXAMINE EDGE</span>
                 </div>
-                <div class="sim-hud-body">
-                    <p id="simDescText">Simulating Dijkstra path exploration...</p>
+                <div class="sim-hud-content">
+                    <p id="simDescText" class="sim-description">Evaluating shortest road path to next vertex...</p>
                 </div>
-                <div class="sim-hud-footer">
-                    <div class="sim-speed-control">
-                        <span>Speed:</span>
-                        <button class="speed-btn" data-speed="600">0.5x</button>
-                        <button class="speed-btn active" data-speed="250">1x</button>
-                        <button class="speed-btn" data-speed="80">3x</button>
+                <div class="sim-hud-progress">
+                    <div class="sim-progress-track">
+                        <div id="simProgressBar" class="sim-progress-fill"></div>
                     </div>
                 </div>
             </div>
 
+            <!-- Leaflet Map Canvas -->
             <div id="map"></div>
-            <div class="map-legend">
-                <div class="legend-item"><span class="legend-dot hospital-dot"></span> Hospital / Requester</div>
-                <div class="legend-item"><span class="legend-dot donor-dot"></span> Registered Donor</div>
-                <div class="legend-item"><span class="legend-dot exploring-dot"></span> Heap Frontier (Active)</div>
-                <div class="legend-item"><span class="legend-line route-line"></span> Shortest Route</div>
-            </div>
         </section>
     </main>
 
-    <!-- Modal for Registering New Donor -->
-    <div id="registerModal" class="modal hidden">
-        <div class="modal-content card">
+    <!-- Modal: Register New Blood Donor -->
+    <div id="registerModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="regModalTitle">
+        <div class="modal-card">
             <div class="modal-header">
-                <h2>Register New Blood Donor</h2>
-                <button id="closeRegisterModalBtn" class="close-btn">&times;</button>
-            </div>
-            <form id="registerDonorForm">
-                <div class="form-group">
-                    <label for="regName">Full Name:</label>
-                    <input type="text" id="regName" class="form-control" required placeholder="e.g., Ahsan Habib">
+                <div class="modal-title-wrap">
+                    <div class="modal-icon-badge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <line x1="19" y1="8" x2="19" y2="14"/>
+                            <line x1="22" y1="11" x2="16" y2="11"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="regModalTitle" class="modal-title">Register Blood Donor</h2>
+                        <p class="modal-subtitle">Enroll in the Bangladesh emergency donor dispatch registry</p>
+                    </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="regBloodType">Blood Group:</label>
-                        <select id="regBloodType" class="form-control">
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
+                <button type="button" id="closeRegisterModalBtn" class="modal-close-btn" aria-label="Close dialog">&times;</button>
+            </div>
+
+            <form id="registerDonorForm" class="modal-form">
+                <div class="form-field">
+                    <label for="regName" class="field-label">Full Legal Name <span class="field-required">*</span></label>
+                    <input type="text" id="regName" class="form-input" required placeholder="e.g. Dr. Rafiqul Islam">
+                </div>
+
+                <div class="form-row-twin">
+                    <div class="form-field">
+                        <label for="regBloodType" class="field-label">Blood Group <span class="field-required">*</span></label>
+                        <select id="regBloodType" class="form-select">
+                            <option value="O+">O+ (Rh Positive)</option>
+                            <option value="O-">O- (Universal Donor)</option>
+                            <option value="A+">A+ (Rh Positive)</option>
+                            <option value="A-">A- (Rh Negative)</option>
+                            <option value="B+">B+ (Rh Positive)</option>
+                            <option value="B-">B- (Rh Negative)</option>
+                            <option value="AB+">AB+ (Universal Recipient)</option>
+                            <option value="AB-">AB- (Rh Negative)</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="regLocation">Bangladesh Location / Node:</label>
-                        <select id="regLocation" class="form-control" required></select>
+                    <div class="form-field">
+                        <label for="regPhone" class="field-label">Phone Number <span class="field-required">*</span></label>
+                        <input type="tel" id="regPhone" class="form-input" required placeholder="+8801712345678">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="regPhone">Phone Number:</label>
-                    <input type="tel" id="regPhone" class="form-control" required placeholder="+8801712345678">
+
+                <div class="form-field">
+                    <label for="regLocation" class="field-label">Stationed Location Node <span class="field-required">*</span></label>
+                    <select id="regLocation" class="form-select" required></select>
                 </div>
-                <div class="form-group">
-                    <label for="regAddress">Address / Landmark:</label>
-                    <input type="text" id="regAddress" class="form-control" placeholder="House 12, Road 4, Dhanmondi">
+
+                <div class="form-field">
+                    <label for="regAddress" class="field-label">Street Address / Landmark</label>
+                    <input type="text" id="regAddress" class="form-input" placeholder="e.g. House 14, Road 5, Dhanmondi">
                 </div>
-                <button type="submit" class="btn btn-primary">Save & Register Donor</button>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancelRegisterModalBtn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-dispatch">Enroll Donor</button>
+                </div>
             </form>
         </div>
     </div>

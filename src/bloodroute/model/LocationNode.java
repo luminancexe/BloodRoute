@@ -12,8 +12,11 @@ public class LocationNode {
     private final boolean isHospital;
     private final String area;
     private final String division;
+    private final String contact;
+    private final String address;
+    private final String email;
 
-    public LocationNode(int id, String name, double latitude, double longitude, boolean isHospital, String area, String division) {
+    public LocationNode(int id, String name, double latitude, double longitude, boolean isHospital, String area, String division, String contact, String address, String email) {
         this.id = id;
         this.name = name;
         this.latitude = latitude;
@@ -21,10 +24,17 @@ public class LocationNode {
         this.isHospital = isHospital;
         this.area = area;
         this.division = division != null ? division : "General";
+        this.contact = contact != null ? contact : "";
+        this.address = address != null ? address : "";
+        this.email = email != null ? email : "";
+    }
+
+    public LocationNode(int id, String name, double latitude, double longitude, boolean isHospital, String area, String division) {
+        this(id, name, latitude, longitude, isHospital, area, division, "", "", "");
     }
 
     public LocationNode(int id, String name, double latitude, double longitude, boolean isHospital, String area) {
-        this(id, name, latitude, longitude, isHospital, area, "General");
+        this(id, name, latitude, longitude, isHospital, area, "General", "", "", "");
     }
 
     public int getId() {
@@ -55,8 +65,21 @@ public class LocationNode {
         return division;
     }
 
+    public String getContact() {
+        return contact;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
     @Override
     public String toString() {
-        return String.format("[%d] %s (%s, %s)%s", id, name, area, division, isHospital ? " 🏥[Hospital]" : "");
+        String contactInfo = !contact.isEmpty() ? " | 📞 " + contact : "";
+        return String.format("[%d] %s (%s, %s)%s%s", id, name, area, division, isHospital ? " 🏥[Hospital]" : "", contactInfo);
     }
 }

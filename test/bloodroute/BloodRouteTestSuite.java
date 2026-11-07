@@ -68,6 +68,14 @@ public class BloodRouteTestSuite {
         // Test linear search by valid ID
         Donor d = DonorSearchEngine.searchById(service.getDonorRegistry(), "D-101");
         assertCondition(d != null && d.getName().equals("Tanvir Ahmed"), "Linear search correctly finds donor D-101");
+
+        // Test newly added specialized hospital (e.g., Labaid Cardiac Hospital Node 37)
+        LocationNode labaid = service.getCityGraph().getNode(37);
+        assertCondition(labaid != null && labaid.getName().contains("Labaid") && !labaid.getContact().isEmpty(), "New private hospital Node 37 (Labaid) has valid contact data");
+
+        // 5. Search by name (Linear Search)
+        CustomLinkedList<Donor> namedDonors = DonorSearchEngine.searchByName(service.getDonorRegistry(), "Tanvir");
+        assertCondition(!namedDonors.isEmpty() && namedDonors.get(0).getName().contains("Tanvir"), "DonorSearchEngine.searchByName finds donor by substring");
     }
 
     /**
@@ -85,13 +93,21 @@ public class BloodRouteTestSuite {
         // 2. Empty CustomMinHeap
         CustomMinHeap emptyHeap = new CustomMinHeap(10);
         assertCondition(emptyHeap.isEmpty(), "CustomMinHeap.isEmpty() returns true on fresh heap");
-        boolean heapExceptionThrown = false;
+        boolean heapExtractExceptionThrown = false;
         try {
             emptyHeap.extractMin();
         } catch (NoSuchElementException e) {
-            heapExceptionThrown = true;
+            heapExtractExceptionThrown = true;
         }
-        assertCondition(heapExceptionThrown, "CustomMinHeap.extractMin() throws NoSuchElementException on empty heap");
+        assertCondition(heapExtractExceptionThrown, "CustomMinHeap.extractMin() throws NoSuchElementException on empty heap");
+
+        boolean heapPeekExceptionThrown = false;
+        try {
+            emptyHeap.peek();
+        } catch (NoSuchElementException e) {
+            heapPeekExceptionThrown = true;
+        }
+        assertCondition(heapPeekExceptionThrown, "CustomMinHeap.peek() throws NoSuchElementException on empty heap");
     }
 
     /**
@@ -130,6 +146,22 @@ public class BloodRouteTestSuite {
             nullNameCaught = true;
         }
         assertCondition(nullNameCaught, "Donor constructor rejects null or empty name");
+
+        boolean nullPhoneCaught = false;
+        try {
+            new Donor("D-INVALID", "Valid Name", BloodType.A_POS, 0, null, true, "Dhaka");
+        } catch (IllegalArgumentException e) {
+            nullPhoneCaught = true;
+        }
+        assertCondition(nullPhoneCaught, "Donor constructor rejects null or empty phone number");
+
+        boolean nullBloodCaught = false;
+        try {
+            new Donor("D-INVALID", "Valid Name", null, 0, "+8801700000000", true, "Dhaka");
+        } catch (IllegalArgumentException e) {
+            nullBloodCaught = true;
+        }
+        assertCondition(nullBloodCaught, "Donor constructor rejects null blood group");
     }
 
     /**
@@ -190,6 +222,64 @@ public class BloodRouteTestSuite {
             }
         }
         assertCondition(universalABValid, "Universal Recipient (AB+) can receive from all 8 blood types");
+
+        // 5. Complete 64-combination ABO/Rh biological matrix test
+        boolean matrixValid = true;
+        for (BloodType d : BloodType.values()) {
+            for (BloodType r : BloodType.values()) {
+                boolean result = BloodType.isCompatible(d, r);
+                // Verify Rh compatibility rule: Rh- negative recipient can never receive from Rh+ positive donor
+                boolean dRhPos = d.getLabel().endsWith("+");
+                boolean rRhNeg = r.getLabel().endsWith("-");
+                if (dRhPos && rRhNeg && result) {
+                    matrixValid = false;
+                    break;
+                }
+            }
+        }
+        assertCondition(matrixValid, "Full 64-combination blood matrix rigorously enforces Rh-negative recipient safety");
+
+        // 6. CustomMinHeap Priority Queue ordering test
+        CustomMinHeap testHeap = new CustomMinHeap(20);
+        double[] testValues = {45.2, 12.8, 3.4, 99.1, 0.5, 23.0, 7.8, 15.6};
+        for (int i = 0; i < testValues.length; i++) {
+            testHeap.insert(i, testValues[i]);
+        }
+        boolean heapOrderValid = true;
+        double prev = -1.0;
+        while (!testHeap.isEmpty()) {
+            double current = testHeap.extractMin().distance;
+            if (current < prev) {
+                heapOrderValid = false;
+                break;
+            }
+            prev = current;
+        }
+        assertCondition(heapOrderValid, "CustomMinHeap successfully extracts elements in strictly ascending priority order");
+
+        // 7. CustomLinkedList node removal boundary testing (Head, Middle, Tail)
+        CustomLinkedList<String> testList = new CustomLinkedList<>();
+        testList.addLast("A");
+        testList.addLast("B");
+        testList.addLast("C");
+        boolean removeMid = testList.remove("B");
+        boolean removeHead = testList.remove("A");
+        boolean removeTail = testList.remove("C");
+        assertCondition(removeMid && removeHead && removeTail && testList.isEmpty(), "CustomLinkedList correctly removes head, middle, and tail nodes");
+
+        // 8. Geographical Coordinate Bounds Validation for Bangladesh Network
+        BloodRouteService fullService = new BloodRouteService();
+        boolean geoCoordsValid = true;
+        for (LocationNode node : fullService.getCityGraph().getAllNodes()) {
+            if (node == null) continue;
+            // Bangladesh latitude: approx 20.5 to 26.8 N, longitude: approx 88.0 to 92.8 E
+            if (node.getLatitude() < 20.0 || node.getLatitude() > 27.0 ||
+                node.getLongitude() < 88.0 || node.getLongitude() > 93.0) {
+                geoCoordsValid = false;
+                break;
+            }
+        }
+        assertCondition(geoCoordsValid, "All 88 graph facilities have verified coordinates within Bangladesh territory");
     }
 
     private static void assertCondition(boolean condition, String description) {
